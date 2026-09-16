@@ -39,21 +39,21 @@ iface eth3 inet static
 ```
 
 Konfig pada masing-masing entitas:
-![alt text](Alice.png)
+![alt text](assets/Alice.png)
 
-![alt text](Mika.png)
+![alt text](assets/Mika.png)
 
-![alt text](Chisa.png)
+![alt text](assets/Chisa.png)
 
-![alt text](Knights.png)
+![alt text](assets/Knights.png)
 
-![alt text](Eiri.png)
+![alt text](assets/Eiri.png)
 
 3. memastikan seluruh Entitas (Client) di bawah Switch 1, Switch 2, dan Switch 3 dapat saling terhubung dan berkomunikasi satu sama lain.
 
-![alt text](<komunikasi alice.png>)
+![alt text](<assets/komunikasi alice.png>)
 
-![alt text](<komunikasi mika.png>)
+![alt text](<assets/komunikasi mika.png>)
 
 4. Setelah itu kita melakukan pengecekan bahwa setiap Client dapat terhubung ke internet secara mandiri dengan melakukan konfigurasi pada setiap Client
 
@@ -63,7 +63,7 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 lalu kita cek apakah tersambung dengan penge cekan ke `google.com`:
 
-![alt text](<tes internet.png>)
+![alt text](<assets/tes internet.png>)
 
 
 
@@ -76,7 +76,7 @@ iptables -t nat -L -v -n
 ```
 
 Hasilnya:
-![alt text](<cek status.jpeg>)
+![alt text](<assets/cek status.jpeg>)
 
 6. Menjalankan file berikut (link file) lalu melakukan packet sniffing menggunakan Wireshark pada interface node mika, lalu menerapkan display filter khusus untuk enyaring paket yang berprotokol DNS atau ICMP.
 
@@ -110,9 +110,9 @@ echo "[*] Check Wireshark for captured packets."
 
 kemudian kita menjalankan isi file tersebut dengan `bash traffic_protocol7.sh` selanjutnya kita click kanan pada kabel yang menghubungkan switch 1 dengan mika, lalu kita start capture.
 
-![alt text](protocol7.jpeg)
+![alt text](assets/protocol7.jpeg)
 
-![alt text](protocol7_2.jpeg)
+![alt text](assets/protocol7_2.jpeg)
 
 hasilnya si Mika minta request ke ip its.ac.id yaitu 103.94.189.5 kemudian Mika juga melakukan request ke ip address milik Alice. Mika melakukan request ke ip 8.8.8.8 dan ip 1.1.1.1
 
