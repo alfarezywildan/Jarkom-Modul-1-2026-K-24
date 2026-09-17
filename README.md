@@ -116,3 +116,70 @@ kemudian kita menjalankan isi file tersebut dengan `bash traffic_protocol7.sh` s
 
 hasilnya si Mika minta request ke ip its.ac.id yaitu 103.94.189.5 kemudian Mika juga melakukan request ke ip address milik Alice. Mika melakukan request ke ip 8.8.8.8 dan ip 1.1.1.1
 
+7. Chisa memutuskan mendirikan FTP Server pada node miliknya dengan shared folder di /var/wired/data. Terapkan kebijakan akses: user alice (hak akses read & write), user mika (dibatasi read-only), dan user eiri (dibatasi tanpa izin akses / blacklist). Buktikan konfigurasi dengan membuat file signal_alice.txt dari user alice, dan buktikan penolakan akses saat user eiri mencoba login.
+
+disini kami melakukan set up ftp server dengan config sebagai berikut:
+
+```
+#!/bin/sh
+
+# Atur DNS agar apk update bisa jalan
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+
+apk update
+apk add vsftpd shadow
+
+# Buat direktori shared
+SHARED="/var/wired/data"
+mkdir -p $SHARED
+chmod 777 $SHARED
+
+# Tambahkan nologin ke shells jika belum ada
+grep -q "/sbin/nologin" /etc/shells || echo "/sbin/nologin" >> /etc/shells
+
+# Buat user (Alice, Mika, Eiri)
+id alice &>/dev/null || (useradd -d $SHARED -s /sbin/nologin alice && echo "alice:alice123" | chpasswd)
+id mika &>/dev/null || (useradd -d $SHARED -s /sbin/nologin mika && echo "mika:mika123" | chpasswd)
+id eiri &>/dev/null || (useradd -d $SHARED -s /sbin/nologin eiri && echo "eiri:eiri123" | chpasswd)
+
+# Konfigurasi Utama vsftpd
+cat <<EOF > /etc/vsftpd.conf
+listen=YES
+listen_address=0.0.0.0
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+chroot_local_user=YES
+allow_writeable_chroot=YES
+seccomp_sandbox=NO
+user_config_dir=/etc/vsftpd_users
+EOF
+
+# Konfigurasi Folder Berbasis User (Per-User Config)
+mkdir -p /etc/vsftpd_users
+
+# Hak akses penuh untuk Alice
+cat <<EOF > /etc/vsftpd_users/alice
+write_enable=YES
+EOF
+
+# Read-Only untuk Mika
+cat <<EOF > /etc/vsftpd_users/mika
+write_enable=NO
+EOF
+
+# Blacklist total untuk Eiri
+cat <<EOF > /etc/vsftpd_users/eiri
+write_enable=NO
+download_enable=NO
+dirlist_enable=NO
+EOF
+
+# Jalankan layanan vsftpd
+pkill vsftpd
+vsftpd /etc/vsftpd.conf &
+```
+
+kemudian kami menyimpan config file tersebut di file `ftp.sh` agar ketika nodenya direset config file tidak hilang dan juga mempermudah kami agar tidak set up ulang setiap kami reboot nodenya.
+
+![alt text](assets/Read&Write.png)
