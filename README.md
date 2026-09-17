@@ -182,4 +182,23 @@ vsftpd /etc/vsftpd.conf &
 
 kemudian kami menyimpan config file tersebut di file `ftp.sh` agar ketika nodenya direset config file tidak hilang dan juga mempermudah kami agar tidak set up ulang setiap kami reboot nodenya.
 
+Kami login pada akun alice pada node Alice. Disini kami membuktikan bahwa akun alice memiliki akses untuk read & write dengan melakukan command `echo "hi ini alice" > signal_alice.txt`. Lakukan command `put signal_alice.txt` untuk mengirim file ke server ftp.
 ![alt text](assets/Read&Write.png)
+
+Selanjutnya kami login pada akun mika di node Mika untuk membuktikan akun mika hanya read-only. Kami menggunakan command `ls` dan `put test.txt` untuk membuktikan kalau akun mika hanya read-only. Pada gambar dibawah bisa dilihat kalau melakukan command `put` muncul tulisan "permission denied".
+![alt text](assets/Read-only.png)
+
+Selanjutnya kami login pada akun eiri di node Eiri untuk membuktikan kalau Eiri diblacklist dari server ftp. Kami menggunakan command `ls` dan `put tes_eiri.txt`. Bisa dilihat pada gambar dibawah ketika melakukan command tersebut maka muncul tulisan "permission denied"
+![alt text](assets/Blacklist.png)
+
+8. Kelompok rahasia Knights perlu mengirimkan dokumen laporan intelijen ke FTP Server Chisa. Lakukan koneksi FTP client dari node Knights ke FTP Server Chisa menggunakan akun alice. Upload file berikut (link file). Analisis sesi Wireshark dan sebutkan: perintah FTP untuk upload (STOR), kode status sukses server (226), dan port data TCP yang dinegosiasikan pada mode PASV.
+
+Pertama kita pergi ke node Knights untuk login pake akun alice. kemudian kita menggunakan command
+```
+get https://drive.google.com/drive/folders/1tvZpueSH9E3GWwXM6KNnM64Y5wNoIAYP?usp=sharing
+```
+untuk meng-upload file dari google drive.
+![alt text](assets/Knights%20login%20to%20Alice.png)
+
+Kemudian kami mengecek di wireshark untuk setiap ip yang tercapture pada wireshark.
+![alt](assets/wireshark%20knights%20no%208.png)
