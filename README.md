@@ -16,7 +16,7 @@
 2. Setelah itu kita melakukan konfigurasi dari router nya hingga pada entitasnya menjadi client menggunakan prefix ip.
 
 Konfig pada Router:
-```
+```sh
 auto eth0
 iface eth0 inet dhcp
   up sysctl -w net.ipv4.ip_forward=1    
@@ -57,7 +57,7 @@ Konfig pada masing-masing entitas:
 
 4. Setelah itu kita melakukan pengecekan bahwa setiap Client dapat terhubung ke internet secara mandiri dengan melakukan konfigurasi pada setiap Client
 
-```
+```sh
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 ```
 
@@ -194,7 +194,7 @@ Selanjutnya kami login pada akun eiri di node Eiri untuk membuktikan kalau Eiri 
 8. Kelompok rahasia Knights perlu mengirimkan dokumen laporan intelijen ke FTP Server Chisa. Lakukan koneksi FTP client dari node Knights ke FTP Server Chisa menggunakan akun alice. Upload file berikut (link file). Analisis sesi Wireshark dan sebutkan: perintah FTP untuk upload (STOR), kode status sukses server (226), dan port data TCP yang dinegosiasikan pada mode PASV.
 
 Pertama kita pergi ke node Knights untuk login pake akun alice. kemudian kita menggunakan command
-```
+```sh
 get https://drive.google.com/drive/folders/1tvZpueSH9E3GWwXM6KNnM64Y5wNoIAYP?usp=sharing
 ```
 untuk meng-upload file dari google drive.
@@ -236,8 +236,11 @@ Selesai setup kita lanjut ke node Eiri untuk melakukan telnet
 telnet 192.223.2.2
 ```
 
-setelah itu tangkap sesi itu menggunakan wireshark
+![alt text](<assets/telnet di mika.png>)
 
+setelah itu tangkap sesi itu menggunakan wireshark dan gunakan Tcp steam
+
+![alt text](<assets/tcp telnet.jpeg>)
 
 
 Jelaskan Mengapa Setiap Karakter Terkirim dalam Paket TCP Terpisah
@@ -269,8 +272,9 @@ nc -vz 192.223.3.2 80
 nc -vz 192.223.3.2 7777
 ```
 
-Setelah itu kita buka wireshark untuk menganalisisnya:
+Setelah itu kita buka wireshark untuk menganalisisnya
 
+![alt text](<assets/tcp port.png>)
 
 ## Analisis Perbedaan TCP Flag (Port Terbuka vs Port Tertutup)
 
@@ -336,13 +340,15 @@ chmod 600 /home/mika_admin/.ssh/authorized_keys
 chown -R mika_admin:mika_admin /home/mika_admin/.ssh
 ```
 
-Lalu kembali laki ke node Mika untuk menjalankan koneksi SSH ke node knights
+Lalu kembali lagi ke node Mika untuk menjalankan koneksi SSH ke node knights
 
 ```sh
 ssh mika_admin@192.223.3.2
 ```
 
 dilanjutkan dengan menganalisis menggunakan wireshark
+
+![alt text](<assets/ssh keygen.jpeg>)
 
 ## Analisis Protokol SSH (Protocol Version Exchange, Key Exchange, & Enskripsi)
 
