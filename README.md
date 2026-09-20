@@ -120,7 +120,7 @@ hasilnya si Mika minta request ke ip its.ac.id yaitu 103.94.189.5 kemudian Mika 
 
 disini kami melakukan set up ftp server dengan config sebagai berikut:
 
-```
+```sh
 #!/bin/sh
 
 # Atur DNS agar apk update bisa jalan
@@ -202,3 +202,156 @@ untuk meng-upload file dari google drive.
 
 Kemudian kami mengecek di wireshark untuk setiap ip yang tercapture pada wireshark.
 ![alt](assets/wireshark%20knights%20no%208.png)
+
+
+11. pertama kita melakukan setup di node chisa dengan membuat `setup_telnet.sh` yang isinya:
+
+```sh
+#!/bin/sh
+
+echo "[*] Memperbarui repository dan menginstal busybox-extras (telnetd)..."
+apk update
+apk add busybox-extras
+
+echo "[*] Membuat user 'phantom_user' dengan password 'wired_ghost'..."
+adduser -h /home/phantom_user -s /bin/sh -D phantom_user
+echo "phantom_user:wired_ghost" | chpasswd
+
+killall telnetd 2>/dev/null
+telnetd -l /bin/login
+
+echo "[+] Setup selesai! Layanan Telnet aktif dan siap diuji dari node Eiri."
+```
+
+setelah itu kita beri izin dan menjalankannya:
+
+```sh
+chmod +x setup_telnet.sh
+./setup_telnet.sh
+```
+
+Selesai setup kita lanjut ke node Eiri untuk melakukan telnet
+
+```sh
+telnet 192.223.2.2
+```
+
+setelah itu tangkap sesi itu menggunakan wireshark
+
+
+
+Jelaskan Mengapa Setiap Karakter Terkirim dalam Paket TCP Terpisah
+ **Jawaban:** 
+  Setiap karakter dikirimkan dalam paket TCP yang terpisah karena protokol seperti Telnet menggunakan mode interaktif terminal berbasis karakter (*character-at-a-time*). Dalam mode ini, sistem tidak menunggu kalimat atau satu baris teks selesai diketik dalam *buffer*, melainkan langsung memproses dan mengirimkan setiap penekanan tombol (*keystroke*) seketika itu juga ke server agar karakter tersebut dapat langsung di-*echo* dan tampil secara *real-time* di layar pengguna tanpa adanya jeda atau *lag*.
+
+12. Pertama kita ke node nya knights untuk melakukan setup menyambungkan port nya dengan membuat `setup_listener.sh` isinya:
+
+```sh
+#!/bin/sh
+
+nohup sh -c "nc -lvkp 22 & nc -lvkp 80 &" > /tmp/port_test.out 2>&1 &
+
+echo "setup selesai"
+```
+
+setelah itu kita beri izin dan menjalankannya:
+
+```sh
+chmod +x setup_telnet.sh
+./setup_listener.sh
+```
+
+Selanjutnya kita ke node Alice untuk melakukan Netcat `nc` ke port 22, 80, dan port tertutup 7777.
+
+```sh
+nc -vz 192.223.3.2 22
+nc -vz 192.223.3.2 80
+nc -vz 192.223.3.2 7777
+```
+
+Setelah itu kita buka wireshark untuk menganalisisnya:
+
+
+## Analisis Perbedaan TCP Flag (Port Terbuka vs Port Tertutup)
+
+### 1. Analisis Port Terbuka (Open Port)
+* **Respons Server:** Ketika klien mengirimkan paket *SYN* ke port yang sedang aktif/terbuka (misalnya port layanan SSH di port `22` atau HTTP di port `80`), server merespons dengan mengembalikan kombinasi flag **SYN-ACK** (`0x0012`).
+* **Kesimpulan:** Keberadaan flag *SYN-ACK* menandakan bahwa server siap menerima koneksi dan proses *3-way handshake* TCP dapat dilanjutkan.
+
+### 2. Analisis Port Tertutup (Closed Port)
+* **Respons Server:** Ketika klien mengirimkan paket *SYN* ke port yang tidak aktif atau tertutup (misalnya port uji coba pada port `7777`), server merespons secara langsung dengan mengembalikan flag **RST-ACK** (`0x0014`).
+* **Kesimpulan:** Flag *Reset (RST)* yang dikombinasikan dengan *ACK* menunjukkan bahwa port tersebut tertutup dan menolak koneksi secara tegas, sehingga sesi komunikasi langsung dihentikan oleh sistem.
+
+13. Pertama kita melakukan setup pada node knights untuk menginstall openssh server dengan `openssh.sh`
+
+```sh
+#!/bin/sh
+
+apk update
+apk add openssh
+
+ssh-keygen -A
+
+id mika_admin >/dev/null 2>&1 || adduser -h /home/mika_admin -s /bin/sh -D mika>
+echo "mika_admin:secure_pass" | chpasswd
+
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd>
+sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_>
+sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_co>
+
+# Jalankan sshd langsung tanpa service manager
+/usr/sbin/sshd
+
+echo "[+] Setup SSH server di Alpine selesai dan aktif!"
+```
+
+Setelah melakukan setup kita lakukan pembersihan port dan SSH lama
+
+```sh
+killall nc
+killall dropbear
+killall sshd 
+```
+
+Jalankan OpenSSH di latar belakang
+```sh
+/usr/sbin/sshd
+```
+
+Selanjutnya kita ke node Mika untuk mengcopy public key dengan langkah dibawah ini:
+
+```sh
+ssh-keygen -R 192.223.3.2
+```
+Setelah itu kita kembali lagi ke node knights untuk menempel public key milik Mika
+
+```sh
+mkdir -p /home/mika_admin/.ssh
+
+# Tempelkan kunci publik Mika di antara tanda kutip di bawah ini
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGZbEAzkjFkbUG1/6Y7FCXWpiFKNSu+UjcbnFFpgsYV/5EHBcZz3sfICGS0D6xkWpIGUdU6imFHyWZ6y58FZbYk4EKS5LIxKvtMYjBdzqZ2AaIKSWSa49bniRxy1dvT9Ne3rgldXjhxguudjGbQEUuzJVbIJQAaMmpRqhc5DjUv7OH5tlbCboUVDWt5vPIdCy3S3Aa92dC/vPlLaDJ8fUJkANBvh/sHP0mh0i+E7dZ/SooRzW29tV/YRttZpNXtWhxW06/dPTfC2dC+zu26eNPMMk0gCf94qBW8/jsNAGyTofZuj38TQtqv44Lgs0RKgfpSO999ke9js5ozP82/yTJ root@Mika" > /home/mika_admin/.ssh/authorized_keys
+
+chmod 700 /home/mika_admin/.ssh
+chmod 600 /home/mika_admin/.ssh/authorized_keys
+chown -R mika_admin:mika_admin /home/mika_admin/.ssh
+```
+
+Lalu kembali laki ke node Mika untuk menjalankan koneksi SSH ke node knights
+
+```sh
+ssh mika_admin@192.223.3.2
+```
+
+dilanjutkan dengan menganalisis menggunakan wireshark
+
+## Analisis Protokol SSH (Protocol Version Exchange, Key Exchange, & Enskripsi)
+
+### 1. Identifikasi Paket Protocol Version Exchange
+* **Analisis:** Berdasarkan hasil tangkapan paket, tahap awal komunikasi SSH dimulai dengan **Protocol Version Exchange**. Klien dan server saling bertukar string versi protokol yang digunakan secara terbuka (*plain text*) sebelum enkripsi aktif.
+* **Contoh Paket:** Terlihat pada tangkapan paket, klien mengirimkan string versi dengan payload seperti `SSH-2.0-OpenSSH_10.2`.
+
+### 2. Identifikasi Paket Key Exchange (KEX)
+* **Analisis:** Setelah pertukaran versi, proses berlanjut ke **Key Exchange (KEX)**. Pada tahap ini, kedua belah pihak melakukan negosiasi algoritma kriptografi, metode pertukaran kunci (seperti `mlkem768x25519-sha256`), serta verifikasi identitas host menggunakan algoritma seperti `ssh-ed25519`. Paket ini berisi parameter negosiasi algoritma dan kunci publik sementara.
+
+### 3. Penjelasan Mengapa Kredensial Tidak Terlihat dalam Bentuk Teks Terbuka
+* **Analisis:** Berbeda dengan Telnet yang mengirimkan seluruh data dan kredensial secara mentah (*plain text*), SSH langsung mengaktifkan lapisan enkripsi yang kuat (seperti `chacha20-poly1305` atau AES) segera setelah proses *Key Exchange* selesai. Oleh karena itu, seluruh data interaktif berikutnya—termasuk *username*, *password*, atau perintah yang diketik—berubah menjadi *ciphertext* yang dienkripsi secara penuh, sehingga tidak dapat dibaca secara langsung di Wireshark.
