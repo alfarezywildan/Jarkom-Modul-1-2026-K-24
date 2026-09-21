@@ -202,7 +202,32 @@ untuk meng-upload file dari google drive.
 
 Kemudian kami mengecek di wireshark untuk setiap ip yang tercapture pada wireshark.
 ![alt](assets/wireshark%20knights%20no%208.png)
+dapat kita lihat pada gambar sesi wireshark, perintah STOR digunakan untuk mengupload sebuah file ke server ftp. Kemudian ketika upload berhasil, maka akan muncul kode status 226 yang menandakan kalau transfer completed. Untuk port data TCP yang dinegosiasikan pada mode PASV ada 2, yang pertama adalah 55888, yang kedua adalah 6224. Ini didapatkan pada 2 terakhir (contoh: 192,223,2,2,24,4) lalu kita hitung dengan rumus: (p1 x 256) + 80. Lalu hasilnya adalah port data TCP tersebut. 
 
+9. Mika mengakses dokumen Protokol Tujuh di (link file) dari FTP Server Chisa. Dari node Mika, unduh file tersebut menggunakan akun mika. Setelah itu, buktikan pembatasan read-only dengan mencoba mengunggah file baru dari akun mika, dan tunjukkan pesan error respon server (error 550 Permission denied) saat mika mencoba melakukan upload.
+
+Pertama-tama kami login ke akun mika di node Mika dengan command 
+```
+lftp -u mika,mika123 192.223.2.2
+```
+Kemudian kita melakukan command
+```
+get https://drive.google.com/drive/folders/1S3hG0dnZBTkCta4uILWwKVc6dSYYGRJ6?usp=sharing
+```
+buat dapetin file yang diminta soal. Kemudian kita melakukan uji download untuk membuktikan kalau mika hanya bisa read-only dan tidak bisa write di server ftp.
+![alt](assets/Read-only.png)
+dapat dilihat kalau mika hanya bisa read-only dan tidak bisa melakukan write.
+
+10. Knights melancarkan uji ketahanan koneksi ke server Chisa untuk menguji latensi jaringan The Wired. Kirimkan paket ping dari node Knights ke node Chisa dengan payload khusus 128 bytes dan interval 0.3 detik sebanyak 77 paket (ping -c 77 -s 128 -i 0.3 <IP_Chisa>). Buka Wireshark, catat nilai ICMP Type dan Code untuk Echo Request vs Echo Reply, serta analisis packet loss dan RTT (min/avg/max).
+
+Disini kami menggunakan command
+```
+ping -c 77 -s 128 -i 0.3 192.223.2.2
+```
+untuk melakukan mengirimkan paket ping pada node Chisa.
+![alt](assets/knights%20no%2010.png)
+![alt](assets/wireshark%20no%2010.png)
+bisa dilihat pada gambar untuk RTT (min/avg/max) nya.
 
 11. pertama kita melakukan setup di node chisa dengan membuat `setup_telnet.sh` yang isinya:
 
@@ -468,6 +493,13 @@ Untuk pertanyaan kedua **"What is the IP address of the source host delivering t
 
 19. disini kami menganalisis file wireshark dan soal yang ada pada socket server
 
-Untuk pertanyaan pertama **"What is the email address of the victim targeted by the extortionist?"**
+Untuk pertanyaan pertama **"What is the email address of the victim targeted by the extortionist?"** disini kami melakukan filter pada wiresharknya dengan ketik smtp untuk melihat aktivitas apa yang dilakukan oleh si penyerang. Kemudian kami melakukan follow tcp stream pada salah satu baris yang ada untuk melihat isi pesan yang dikirim oleh si penyerang.
+![alt](assets/user%20no%2019.png)
+Dapat dilihat bahwa email dari korban adalah victim@protocol7.co.jp. Ini juga sekaligus menjawab pertanyaan kedua **"What password did the extortionist claim was stolen from the victim?"** yaitu pr0tocol_7_user, ketiga **"What type of malware did the attacker claim infected the victim's computer?"** yaitu ransomware, keempat **"How many days deadline did the attacker give the victim to pay?"** yaitu 3, dan kelima **"What is the MailClientID specified at the bottom of the extortion email?"** yaitu 7719980706.
 
 20. disini kami menganalisis file wireshark dan soal yang ada pada socket server
+
+Untuk pertanyaan pertama **"What specific TLS protocol version was negotiated for the encrypted communication?"** disini kami melakukan follow tcp stream pada source 10.9.0.2 dan destination 93.184.216.34 pada protocol TLSv1.2 dan jawaban untuk pertanyaan ini adalah protocolnya.
+![alt](assets/nomer%2020.png)
+
+Untuk pertanyaan kedua **"What domain name (SNI / Host) was requested by the client during the TLS handshake?"** dapat dilihat pada gambar yang bertuliskan Host: example.com, example.com adalah nama domain yang digunakan. Ini juga sekaligus menjawab pertanyaan ketiga **"What is the IP address of the HTTPS server?"** yaitu pada kolom destination 93.184.216.34, keempat **"What User-Agent string was used by the client during the decrypted HTTP session?"** yaitu curl/7.62.0 (dapat dilihat pada gambar), dan kelima **"What HTTP request method and path was sent in the decrypted request?"** yaitu HEAD / HTTP/1.1 (dapat dilihat pada tulisan paling atas sendiri di gambar).
